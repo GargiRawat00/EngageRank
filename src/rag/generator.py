@@ -34,30 +34,28 @@ Abstract: {article["abstract"]}
 """
 
     prompt = f"""
-You are generating a personalized news briefing.
-
-Use ONLY the information explicitly present in the provided articles.
+Create a concise personalized news briefing from the articles below.
 
 STRICT RULES:
-- Do not invent any facts.
-- Do not infer missing information.
-- Do not add background knowledge.
+- Use only facts explicitly present in the title, category, or abstract.
+- Do not use outside knowledge.
+- Do not infer missing details.
+- Do not invent facts.
 - Do not assume numbers, identities, causes, consequences, or relationships.
-- Never convert vague or plural wording into a specific number unless that number is explicitly stated.
-- Do not add league names, sport types, locations, organizations, or classifications unless they are explicitly present in the title, category, or abstract.
-- When multiple facts appear in the title and abstract, do not combine them into a new factual statement unless that relationship is explicitly stated.
-- If an article provides very little information, write a shorter summary instead of filling in gaps.
-- Summarize every provided article.
-- Keep each article summary concise.
-- Preserve important names, numbers, and facts exactly as supported by the context.
-- Do not mention anything that cannot be directly supported by the title, category, or abstract.
-- Use the article title, or a shortened version of it, as the heading.
-- Do not create new factual connections between separate statements.
+- Do not combine separate facts into a new factual claim unless the relationship is explicitly stated.
+- Do not add league names, sport types, locations, organizations, or classifications unless explicitly present.
+- Summarize ALL provided articles.
+- Write at most 2-3 concise sentences for each article.
+- If an article has very little information, keep its summary short.
+- Use the original article title, or a shortened version of it, as the heading.
+- Return plain text only.
+- Do not use Markdown symbols such as **, *, #, or bullet markers.
+- Never stop after summarizing only one article.
 
 ARTICLES:
 {context_text}
 
-Generate a concise personalized news briefing.
+Write the complete briefing for all {len(articles)} articles.
 """
 
     return prompt
@@ -78,34 +76,28 @@ def generate_briefing(
 
         messages=[
             {
-                "role": "system",
-                "content": (
-                    "You are a strictly grounded personalized news briefing assistant. "
-                    "Use only facts explicitly stated in the supplied article titles, "
-                    "categories, and abstracts. Do not infer, assume, classify, combine, "
-                    "or add missing details. Do not use outside knowledge. "
-                    "If the context is limited, keep the summary limited."
-                )
-            },
-            {
                 "role": "user",
                 "content": prompt
             }
         ],
 
-        # deterministic / less creative
-        temperature=0.0,
+        reasoning_effort="low",
 
-        # enough space to summarize all retrieved articles
-        max_tokens=1000
+        temperature=0.2,
+
+        max_completion_tokens=1500,
+
+        stream=False
     )
 
-    return (
+    briefing = (
         response
         .choices[0]
         .message
         .content
     )
+
+    return briefing
 
 
 if __name__ == "__main__":
@@ -123,5 +115,8 @@ if __name__ == "__main__":
         top_k=5
     )
 
-    print("\nPERSONALIZED BRIEFING\n")
+    print(
+        "\nPERSONALIZED BRIEFING\n"
+    )
+
     print(briefing)
